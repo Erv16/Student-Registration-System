@@ -20,11 +20,31 @@ public class studentRegistrationSystem{
 		try{
 			do{
 			System.out.println("Please select an option:\n" +
-							   "1. To view information");
+							   "1. To view information\n" +
+							   "2. To add a Student's to the database\n" +
+							   "10. View Logs");
 			option = Integer.parseInt(br.readLine());
 			switch(option){
 				case 1:
-					viewInformation();
+					displayInformation();
+					break;
+				case 2:
+					System.out.println("Please enter the sid for the Student:");
+					String sid = br.readLine();
+					System.out.println("Please enter the student's first name");
+					String firstName = br.readLine();
+					System.out.println("Please enter the student's last name");
+					String lastName = br.readLine();
+					System.out.println("Please enter the current status of the student");
+					String status = br.readLine();
+					System.out.println("Please enter the current gpa of the student");
+					Double gpa = Double.parseDouble(br.readLine());
+					System.out.println("Please enter the email address of the student");
+					String email = br.readLine();
+					addStudent(sid, firstName, lastName, status, gpa, email);
+					break;
+				case 10:
+					displayLogs();
 					break;
 			}
 			System.out.println("Do you wish to continue?\n" +
@@ -38,7 +58,7 @@ public class studentRegistrationSystem{
 		
 	}
 
-	public static void viewInformation(){
+	public static void displayInformation(){
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			System.out.println("Please select an option:\n" + 
 								"a. To view Students information\n" +
@@ -98,10 +118,9 @@ public class studentRegistrationSystem{
 		        // print the results
 		        while (rs.next()) {
 		            System.out.println(rs.getString(1) + "\t" +
-		                rs.getString(2) + "\t" + rs.getString(3) + 
-		                rs.getString(4) + 
-		                "\t" + rs.getDouble(5) + "\t" +
-		                rs.getString(6));
+		            rs.getString(2) + "\t" + rs.getString(3) + "\t" +
+		            rs.getString(4) + "\t" + rs.getDouble(5) + "\t" +
+		            rs.getString(6));
 		        }
 
 		        //close the result set, statement, and the connection
@@ -138,10 +157,8 @@ public class studentRegistrationSystem{
 		        // print the results
 		        while (rs.next()) {
 		            System.out.println(rs.getString(1) + "\t" +
-		                rs.getString(2) + "\t" + rs.getString(3) + 
-		                rs.getString(4) + 
-		                "\t" + rs.getDouble(5) + "\t" +
-		                rs.getString(6));
+							           rs.getString(2) + "\t" + 
+							           rs.getString(3));
 		        }
 
 		        //close the result set, statement, and the connection
@@ -178,10 +195,9 @@ public class studentRegistrationSystem{
 		        // print the results
 		        while (rs.next()) {
 		            System.out.println(rs.getString(1) + "\t" +
-		                rs.getString(2) + "\t" + rs.getString(3) + 
-		                rs.getString(4) + 
-		                "\t" + rs.getDouble(5) + "\t" +
-		                rs.getString(6));
+		            					rs.getString(2) + "\t" + 
+		            					rs.getString(3) + "\t" +
+		            					rs.getString(4));
 		        }
 
 		        //close the result set, statement, and the connection
@@ -218,10 +234,10 @@ public class studentRegistrationSystem{
 		        // print the results
 		        while (rs.next()) {
 		            System.out.println(rs.getString(1) + "\t" +
-		                rs.getString(2) + "\t" + rs.getString(3) + 
-		                rs.getString(4) + 
-		                "\t" + rs.getDouble(5) + "\t" +
-		                rs.getString(6));
+		            rs.getString(2) + "\t" + rs.getString(3) + "\t" +
+		            rs.getString(4) + "\t" + rs.getString(5) + "\t" +
+		            rs.getString(6) + "\t" + rs.getString(7) + "\t" +
+		            rs.getString(8));
 		        }
 
 		        //close the result set, statement, and the connection
@@ -258,13 +274,85 @@ public class studentRegistrationSystem{
 		        // print the results
 		        while (rs.next()) {
 		            System.out.println(rs.getString(1) + "\t" +
-		                rs.getString(2) + "\t" + rs.getString(3) + 
-		                rs.getString(4) + 
-		                "\t" + rs.getDouble(5) + "\t" +
-		                rs.getString(6));
+		            					rs.getString(2) + "\t" + 
+		            					rs.getString(3));
 		        }
 
 		        //close the result set, statement, and the connection
+		        rs.close();
+		        cs.close();
+		        conn.close();
+			}
+			catch (SQLException ex) 
+			{ 
+				System.out.println ("\n*** SQLException caught ***\n" + ex.getMessage());
+			}
+   			catch (Exception e) 
+   			{
+   				System.out.println ("\n*** other Exception caught ***\n");
+   			}
+		}
+
+		public static void addStudent(String sidIn, String firstNameIn, String lastNameIn, String statusIn, Double gpaIn, String emailIn){
+			try{
+				OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
+			    ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
+			    Connection conn = ds.getConnection("epalani1", "Hydropump16");
+
+			    Statement stmt = conn.createStatement ();
+			    String dbcall = "{ call student_registration.add_student(?,?,?,?,?,?)}";
+		      	CallableStatement cs = conn.prepareCall(dbcall);
+
+			    cs.setString(1, sidIn);
+			    cs.setString(2, firstNameIn);
+			    cs.setString(3, lastNameIn);
+			    cs.setString(4, statusIn);
+			    cs.setDouble(5, gpaIn);
+			    cs.setString(6, emailIn);
+
+			    cs.executeUpdate();
+
+			    stmt.close();
+			    conn.close();
+			}
+			catch (SQLException ex) 
+			{ 
+				System.out.println ("\n*** SQLException caught ***\n" + ex.getMessage());
+			}
+   			catch (Exception e) 
+   			{
+   				System.out.println ("\n*** other Exception caught ***\n");
+   			}
+			
+		}
+
+		public static void displayLogs(){
+			try{
+				//Connection to Oracle server
+		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
+		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
+		        Connection conn = ds.getConnection("epalani1", "Hydropump16");
+
+		        //Prepare to call stored procedure:
+		        CallableStatement cs = conn.prepareCall("begin ? := student_registration.show_logs(); end;");
+		        //register the out parameter (the first parameter)
+		        cs.registerOutParameter(1, OracleTypes.CURSOR);
+		        
+		        
+		        // execute and retrieve the result set
+		        cs.execute();
+		        ResultSet rs = (ResultSet)cs.getObject(1);
+
+		        // print the results
+		        while (rs.next()) {
+		            System.out.println(rs.getString(1) + "\t" +
+		            rs.getString(2) + "\t" + rs.getString(3) + "\t" +
+		            rs.getString(4) + "\t" + rs.getString(5) + "\t" +
+		            rs.getString(6));
+		        }
+
+		        //close the result set, statement, and the connection
+		        rs.close();
 		        cs.close();
 		        conn.close();
 			}
