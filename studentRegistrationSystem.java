@@ -21,7 +21,8 @@ public class studentRegistrationSystem{
 			do{
 			System.out.println("Please select an option:\n" +
 							   "1. To view information\n" +
-							   "2. To add a Student's to the database\n" +
+							   "2. To add a Student to the database\n" +
+							   "3. List the class information for a particular student\n" +
 							   "10. View Logs");
 			option = Integer.parseInt(br.readLine());
 			switch(option){
@@ -30,7 +31,7 @@ public class studentRegistrationSystem{
 					break;
 				case 2:
 					System.out.println("Please enter the sid for the Student:");
-					String sid = br.readLine();
+					String sid_2 = br.readLine();
 					System.out.println("Please enter the student's first name");
 					String firstName = br.readLine();
 					System.out.println("Please enter the student's last name");
@@ -41,7 +42,12 @@ public class studentRegistrationSystem{
 					Double gpa = Double.parseDouble(br.readLine());
 					System.out.println("Please enter the email address of the student");
 					String email = br.readLine();
-					addStudent(sid, firstName, lastName, status, gpa, email);
+					addStudent(sid_2, firstName, lastName, status, gpa, email);
+					break;
+				case 3:
+					System.out.println("Please enter the student's id to be searched");
+					String sid_3 = br.readLine();
+					getStudentClassInformation(sid_3);
 					break;
 				case 10:
 					displayLogs();
@@ -364,5 +370,57 @@ public class studentRegistrationSystem{
    			{
    				System.out.println ("\n*** other Exception caught ***\n");
    			}
+		}
+
+		public static void getStudentClassInformation(String sidIn){
+			try{	
+				//Connection to Oracle server
+		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
+		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
+		        Connection conn = ds.getConnection("epalani1", "Hydropump16");
+
+		        Statement stmt = conn.createStatement();
+
+		        String errorMsg = null;
+
+		        String dbcall = "{call student_registration.get_class_information(?,?,?)}";
+
+		        CallableStatement cs = conn.prepareCall(dbcall);
+		        cs.setString(1,sidIn);
+		        cs.registerOutParameter(2,OracleTypes.VARCHAR);
+		        cs.registerOutParameter(3,OracleTypes.CURSOR);
+
+		        cs.execute();
+
+		        errorMsg = cs.getString(2);
+
+		        if(errorMsg != null){
+		        	System.out.println(errorMsg);
+		        }
+		        else{
+		        	ResultSet rs = (ResultSet)cs.getObject(3);
+		        	while (rs.next()) {
+			            System.out.println(rs.getString(1) + "\t" + rs.getString(2) + "\t" + 
+			            					rs.getString(3) + "\t" + rs.getString(4) + "\t" +
+			            					rs.getString(5) + "\t" + rs.getString(6) + "\t" +
+			            					rs.getString(7) + "\t" + rs.getString(8)
+			            );
+		        	}
+		        	rs.close();
+		        }
+		        
+		        //close the result set, statement, and the connection
+		        cs.close();
+		        conn.close();
+		    }
+		    catch (SQLException ex) 
+			{ 
+				System.out.println ("\n*** SQLException caught ***\n" + ex.getMessage());
+			}
+   			catch (Exception e) 
+   			{
+   				System.out.println ("\n*** other Exception caught ***\n" + e);
+   			}
+
 		}
 }
