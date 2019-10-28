@@ -23,6 +23,7 @@ public class studentRegistrationSystem{
 							   "1. To view information\n" +
 							   "2. To add a Student to the database\n" +
 							   "3. List the class information for a particular student\n" +
+							   "5. List the class information\n" +
 							   "10. View Logs");
 			option = Integer.parseInt(br.readLine());
 			switch(option){
@@ -48,6 +49,11 @@ public class studentRegistrationSystem{
 					System.out.println("Please enter the student's id to be searched");
 					String sid_3 = br.readLine();
 					getStudentClassInformation(sid_3);
+					break;
+				case 5:
+					System.out.println("Please enter the class id to be searched");
+					String classId = br.readLine();
+					getClassInformation(classId);
 					break;
 				case 10:
 					displayLogs();
@@ -383,7 +389,7 @@ public class studentRegistrationSystem{
 
 		        String errorMsg = null;
 
-		        String dbcall = "{call student_registration.get_class_information(?,?,?)}";
+		        String dbcall = "{call student_registration.get_student_class_information(?,?,?)}";
 
 		        CallableStatement cs = conn.prepareCall(dbcall);
 		        cs.setString(1,sidIn);
@@ -422,5 +428,55 @@ public class studentRegistrationSystem{
    				System.out.println ("\n*** other Exception caught ***\n" + e);
    			}
 
+		}
+
+		public static void getClassInformation(String classIdIn){
+			try{	
+				//Connection to Oracle server
+		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
+		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
+		        Connection conn = ds.getConnection("epalani1", "Hydropump16");
+
+		        Statement stmt = conn.createStatement();
+
+		        String errorMsg = null;
+
+		        String dbcall = "{call student_registration.get_class_information(?,?,?)}";
+
+		        CallableStatement cs = conn.prepareCall(dbcall);
+		        cs.setString(1,classIdIn);
+		        cs.registerOutParameter(2,OracleTypes.VARCHAR);
+		        cs.registerOutParameter(3,OracleTypes.CURSOR);
+
+		        cs.execute();
+
+		        errorMsg = cs.getString(2);
+
+		        if(errorMsg != null){
+		        	System.out.println(errorMsg);
+		        }
+		        else{
+		        	ResultSet rs = (ResultSet)cs.getObject(3);
+		        	while (rs.next()) {
+			            System.out.println(rs.getString(1) + "\t" + rs.getString(2) + "\t" + 
+			            					rs.getString(3) + "\t" + rs.getString(4) + "\t" +
+			            					rs.getString(5) + "\t" + rs.getString(6)
+			            );
+		        	}
+		        	rs.close();
+		        }
+		        
+		        //close the result set, statement, and the connection
+		        cs.close();
+		        conn.close();
+		    }
+		    catch (SQLException ex) 
+			{ 
+				System.out.println ("\n*** SQLException caught ***\n" + ex.getMessage());
+			}
+   			catch (Exception e) 
+   			{
+   				System.out.println ("\n*** other Exception caught ***\n" + e);
+   			}	
 		}
 }

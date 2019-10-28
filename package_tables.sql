@@ -9,9 +9,12 @@ CREATE OR REPLACE PACKAGE student_registration AS
 	FUNCTION show_enrollments RETURN ref_cursor; 
 	FUNCTION show_logs RETURN ref_cursor; 
 
-   	PROCEDURE get_class_information(sid_in IN students.sid%type, error_msg OUT varchar2, rc_cursor OUT SYS_REFCURSOR);
-
 	PROCEDURE add_student(sid_in IN students.sid%TYPE, firstname_in IN students.firstname%TYPE, lastname_in IN students.lastname%TYPE, status_in IN students.status%TYPE, gpa_in IN students.gpa%TYPE, email_in IN students.email%TYPE);
+
+   	PROCEDURE get_student_class_information(sid_in IN students.sid%TYPE, error_msg OUT varchar2, rc_cursor OUT SYS_REFCURSOR);
+
+	PROCEDURE get_class_information(classid_in IN classes.classid%TYPE, error_msg OUT varchar2, rc_cursor OUT SYS_REFCURSOR);
+
 END;
 /
 
@@ -59,7 +62,7 @@ BEGIN
 	RETURN rc;
 END;
 
-PROCEDURE get_class_information(sid_in IN students.sid%TYPE, error_msg OUT varchar2, rc_cursor OUT SYS_REFCURSOR) IS
+PROCEDURE get_student_class_information(sid_in IN students.sid%TYPE, error_msg OUT varchar2, rc_cursor OUT SYS_REFCURSOR) IS
  	student_exists number;
  	student_enrolled number;
  BEGIN
@@ -82,6 +85,31 @@ PROCEDURE get_class_information(sid_in IN students.sid%TYPE, error_msg OUT varch
 		INNER JOIN courses c
 		ON cl.dept_code = c.dept_code AND cl.course_no = c.course_no
 		WHERE s.sid = sid_in;
+	END IF;
+END;
+
+PROCEDURE get_class_information(classid_in IN classes.classid%TYPE, error_msg OUT varchar2, rc_cursor OUT SYS_REFCURSOR) IS
+	class_exists number;
+	students_enrolled number;
+BEGIN
+	SELECT COUNT(classid) INTO class_exists FROM classes WHERE classid = classid_in;
+	SELECT COUNT(e.sid) INTO students_enrolled FROM classes cl, enrollments e WHERE cl.classid = classid_in AND cl.classid = e.classid;
+
+	IF class_exists = 0 THEN
+		error_msg := 'The class is invalid';
+	ELSIF students_enrolled = 0 THEN
+		error_msg := 'No student is enrolled in the class';
+	ELSE
+		OPEN rc_cursor FOR
+		SELECT cl.classid, c.title, cl.semester, cl.year, s.sid, s.lastname
+		FROM classes cl
+		INNER JOIN courses c
+		ON cl.dept_code = c.dept_code AND cl.course_no = c.course_no
+		INNER JOIN enrollments e
+		ON e.classid = cl.classid
+		INNER JOIN students s
+		ON e.sid = s.sid
+		WHERE cl.classid = classid_in;
 	END IF;
 END;
 
