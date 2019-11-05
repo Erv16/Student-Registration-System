@@ -10,8 +10,8 @@ public class studentRegistrationSystem{
 	public static void main(String args[]) throws SQLException{
 
 		// OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
-  //    	ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
-  //    	Connection conn = ds.getConnection("epalani1", "Hydropump16");
+  		// ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
+  		// Connection conn = ds.getConnection("epalani1", "Hydropump16");
 
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		int option = 0;
@@ -23,7 +23,9 @@ public class studentRegistrationSystem{
 							   "1. To view information\n" +
 							   "2. To add a Student to the database\n" +
 							   "3. List the class information for a particular student\n" +
+							   "4. List the pre-requisites for a particular course\n" + 
 							   "5. List the class information\n" +
+							   "6. To enroll student in a class\n" +
 							   "10. View Logs");
 			option = Integer.parseInt(br.readLine());
 			switch(option){
@@ -31,7 +33,7 @@ public class studentRegistrationSystem{
 					displayInformation();
 					break;
 				case 2:
-					System.out.println("Please enter the sid for the Student:");
+					System.out.println("Please enter the sid for the Student");
 					String sid_2 = br.readLine();
 					System.out.println("Please enter the student's first name");
 					String firstName = br.readLine();
@@ -50,19 +52,33 @@ public class studentRegistrationSystem{
 					String sid_3 = br.readLine();
 					getStudentClassInformation(sid_3);
 					break;
+				case 4:
+					System.out.println("Please enter the Department Code for the course to be searched");
+					String deptCode = br.readLine();
+					System.out.println("Please enter the course number of the course to be searched");
+					int courseNo = Integer.parseInt(br.readLine());
+					getPreRequisiteInformation(deptCode, courseNo);
+					break;
 				case 5:
 					System.out.println("Please enter the class id to be searched");
 					String classId = br.readLine();
 					getClassInformation(classId);
+					break;
+				case 6:
+					System.out.println("Please enter the student's id that has to be enrolled");
+					String sid_6 = br.readLine();
+					System.out.println("Please enter the class id for which the student needs to be enrolled");
+					String classId_6 = br.readLine();
+					studentEnrollment(sid_6,classId_6);
 					break;
 				case 10:
 					displayLogs();
 					break;
 			}
 			System.out.println("Do you wish to continue?\n" +
-							    "Enter Yes or No");
+							    "Enter [Y/N]");
 			userPref = br.readLine();		
-			}while((userPref.toLowerCase()).equals("yes"));
+			}while((userPref.toLowerCase()).equals("y"));
 		}
 		catch(Exception e){
 			System.out.println(e);
@@ -478,5 +494,104 @@ public class studentRegistrationSystem{
    			{
    				System.out.println ("\n*** other Exception caught ***\n" + e);
    			}	
+		}
+
+		public static void getPreRequisiteInformation(String deptCodeIn, int courseNoIn){
+			try{	
+				//Connection to Oracle server
+		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
+		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
+		        Connection conn = ds.getConnection("epalani1", "Hydropump16");
+
+		        Statement stmt = conn.createStatement();
+
+		        String errorMsg = null;
+
+		        CallableStatement cs1 = conn.prepareCall("TRUNCATE TABLE prereq_courses_temp_table");
+		        cs1.execute();
+
+		        String dbcall = "{call student_registration.process_prerequisites(?,?,?,?)}";
+		        
+		        CallableStatement cs2  = conn.prepareCall(dbcall);
+		        cs2.setString(1,deptCodeIn);
+		        cs2.setInt(2,courseNoIn);
+		        cs2.registerOutParameter(3,OracleTypes.VARCHAR);
+		        cs2.registerOutParameter(4,OracleTypes.CURSOR);
+
+		        cs2.execute();
+
+		        errorMsg = cs2.getString(3);
+
+		        if(errorMsg != null){
+		        	System.out.println(errorMsg);
+		        }
+		        else{
+		        	ResultSet rs = (ResultSet)cs2.getObject(4);
+		        	while (rs.next()) {
+			            System.out.println(rs.getString(1)
+			            );
+		        	}
+		        	rs.close();
+		        }
+		        
+		        //close the result set, statement, and the connection
+		        cs1.close();
+		        cs2.close();
+		        conn.close();
+		    }
+		    catch (SQLException ex) 
+			{ 
+				System.out.println ("\n*** SQLException caught ***\n" + ex.getMessage());
+			}
+   			catch (Exception e) 
+   			{
+   				System.out.println ("\n*** other Exception caught ***\n" + e);
+   			}	
+		}
+
+		public static void studentEnrollment(String sidIn, String classIdIn){
+			try{
+				//Connection to Oracle server
+		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
+		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
+		        Connection conn = ds.getConnection("epalani1", "Hydropump16");
+
+		        Statement stmt = conn.createStatement();
+
+		        String errorMsg = null;
+
+		        CallableStatement cs1 = conn.prepareCall("TRUNCATE TABLE prereq_courses_temp_table");
+		        cs1.execute();
+
+		        String dbcall = "{call student_registration.enroll_student(?,?,?)}";
+
+		        CallableStatement cs  = conn.prepareCall(dbcall);
+		        cs.setString(1,sidIn);
+		        cs.setString(2,classIdIn);
+		        cs.registerOutParameter(3,OracleTypes.VARCHAR);
+
+		        cs.execute();
+
+		        errorMsg = cs.getString(3);
+
+		        if(errorMsg != null){
+		        	System.out.println(errorMsg);
+		        }
+		        else{
+		        	System.out.println("The student " + sidIn + " has been enrolled successfully");
+		        }
+		        
+		        //close the result set, statement, and the connection
+		        cs.close();
+		        conn.close();
+			}
+			catch (SQLException ex) 
+			{ 
+				System.out.println ("\n*** SQLException caught ***\n" + ex.getMessage());
+			}
+   			catch (Exception e) 
+   			{
+   				System.out.println ("\n*** other Exception caught ***\n" + e);
+   			}
 		}
 }

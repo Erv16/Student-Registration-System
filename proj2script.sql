@@ -4,6 +4,7 @@ drop table enrollments;
 drop table classes;
 drop table courses;
 drop table students;
+drop table prereq_courses_temp_table;
 
 create table students (sid char(4) primary key check (sid like 'B%'),
 firstname varchar2(15) not null, lastname varchar2(15) not null, status varchar2(10) 
@@ -36,6 +37,8 @@ lgrade char check (lgrade in ('A', 'B', 'C', 'D', 'F', 'I', null)), primary key 
 create table logs (logid number(4) primary key, who varchar2(10) not null, time date not null,
 table_name varchar2(20) not null, operation varchar2(6) not null, key_value varchar2(14));
 
+create table prereq_courses_temp_table(dept_code varchar2(4) not null, course_no number(3) not null);
+
 insert into students values ('B001', 'Anne', 'Broder', 'junior', 3.6, 'broder@bu.edu');
 insert into students values ('B002', 'Terry', 'Buttler', 'senior', 3.7, 'buttler@bu.edu');
 insert into students values ('B003', 'Tracy', 'Wang', 'senior', 4.0, 'wang@bu.edu');
@@ -58,13 +61,13 @@ insert into classes values  ('c0002', 'Math', 314, 1, 2019, 'Fall', 25, 24);
 insert into classes values  ('c0003', 'Math', 314, 2, 2019, 'Fall', 25, 22);
 insert into classes values  ('c0004', 'CS', 432, 1, 2018, 'Spring', 30, 30);
 insert into classes values  ('c0005', 'CS', 240, 1, 2018, 'Fall', 40, 39);
-insert into classes values  ('c0006', 'CS', 532, 1, 2018, 'Spring', 29, 28);
+insert into classes values  ('c0006', 'CS', 532, 1, 2018, 'Spring', 29, 25);
 insert into classes values  ('c0007', 'Math', 221, 1, 2019, 'Spring', 30, 30);
 
 insert into enrollments values  ('B001', 'c0001', 'A');
 insert into enrollments values  ('B002', 'c0002', 'B');
 insert into enrollments values  ('B003', 'c0004', 'A');
-insert into enrollments values  ('B004', 'c0004', 'C');
+insert into enrollments values  ('B004', 'c0004', 'D');
 insert into enrollments values  ('B004', 'c0005', 'B');
 insert into enrollments values  ('B005', 'c0006', 'B');
 insert into enrollments values  ('B006', 'c0006', 'A');
@@ -75,3 +78,8 @@ insert into enrollments values  ('B001', 'c0003', 'B');
 insert into enrollments values  ('B001', 'c0006', 'B');
 insert into enrollments values  ('B001', 'c0004', 'A');
 insert into enrollments values  ('B001', 'c0005', 'B');
+
+insert into prerequisites values ('Math', '314', 'Math', '221');
+insert into prerequisites values ('CS', '240', 'Math', '314');
+insert into prerequisites values ('CS', '532', 'CS', '432');
+insert into prerequisites values ('CS', '552', 'CS', '240');
