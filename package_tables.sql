@@ -1,4 +1,4 @@
-set serveroutput on;
+SET serveroutput ON;
 
 CREATE OR REPLACE PACKAGE student_registration AS
 	TYPE ref_cursor is ref cursor;
@@ -23,6 +23,9 @@ CREATE OR REPLACE PACKAGE student_registration AS
 
 	PROCEDURE enroll_student(sid_in IN students.sid%TYPE, classid_in IN classes.classid%TYPE, error_msg OUT varchar2);
 
+	PROCEDURE drop_student_enrollment(sid_in IN students.sid%TYPE, classid_in IN classes.classid%TYPE, error_msg OUT VARCHAR2);
+
+	PROCEDURE delete_student(sid_in IN students.sid%TYPE, error_msg OUT VARCHAR2);
 END;
 /
 
@@ -59,7 +62,8 @@ END;
 FUNCTION show_enrollments RETURN ref_cursor AS rc ref_cursor;
 BEGIN
 	OPEN rc FOR
-		SELECT * FROM enrollments;
+		SELECT * FROM enrollments
+		ORDER BY sid;
 	RETURN rc;
 END;
 
@@ -152,8 +156,8 @@ PROCEDURE get_prerequisites(rc_cursor OUT SYS_REFCURSOR) IS
 
 PROCEDURE prerequisites_grade_check(dept_code_in IN prerequisites.dept_code%TYPE, course_no_in IN prerequisites.course_no%TYPE) IS
 	CURSOR prereq_grade_cursor IS
-		SELECT pre_dept_code, pre_course_no FROM prerequisites
-		WHERE dept_code = dept_code_in AND course_no = course_no_in;
+	SELECT pre_dept_code, pre_course_no FROM prerequisites
+	WHERE dept_code = dept_code_in AND course_no = course_no_in;
 
 	temp_cursor prereq_grade_cursor%ROWTYPE;
 
@@ -179,6 +183,8 @@ cl_semester classes.semester%TYPE;
 cl_dept_code classes.dept_code%TYPE;
 cl_course_no classes.course_no%TYPE;
 courses_enrolled NUMBER;
+pre_reqs_exists NUMBER;
+pre_reqs_enrolled NUMBER;
 
 BEGIN
 
@@ -212,31 +218,105 @@ BEGIN
 				ELSE
 					SELECT dept_code, course_no INTO cl_dept_code, cl_course_no FROM classes WHERE classid = classid_in;
 					prerequisites_grade_check(cl_dept_code, cl_course_no);
-					SELECT COUNT(*) INTO courses_enrolled FROM enrollments e WHERE e.sid = sid_in AND e.lgrade NOT IN ('D','F','I') AND e.lgrade IS NOT NULL AND e.classid IN (SELECT classid FROM classes WHERE (dept_code,course_no) IN(SELECT dept_code, course_no FROM prereq_courses_temp_table));
-					IF(courses_enrolled > 0) THEN
-						SELECT year, semester INTO cl_year, cl_semester FROM classes WHERE classid = classid_in;
-						SELECT COUNT(*) INTO courses_enrolled FROM enrollments WHERE sid = sid_in AND classid IN(
-						SELECT classid FROM classes WHERE year = cl_year AND semester = cl_semester AND classid <> classid_in
-						);
-						IF(courses_enrolled >= 4) THEN
-							error_msg := 'Students cannot be enrolled in more than four classes in the same semester';
-						ELSE
-							IF(courses_enrolled = 3) THEN
-								error_msg := 'You are overloaded';
-								INSERT INTO enrollments VALUES(sid_in, classid_in, null);
+					SELECT COUNT(*) INTO pre_reqs_exists FROM prereq_courses_temp_table;
+					SELECT year, semester INTO cl_year, cl_semester FROM classes WHERE classid = classid_in;
+					SELECT COUNT(*) INTO courses_enrolled FROM enrollments WHERE sid = sid_in AND classid IN(
+					SELECT classid FROM classes WHERE year = cl_year AND semester = cl_semester AND classid <> classid_in
+					);
+					IF(pre_reqs_exists > 0) THEN
+						SELECT COUNT(*) INTO pre_reqs_enrolled FROM enrollments e WHERE e.sid = sid_in AND e.lgrade NOT IN ('D','F','I') AND e.lgrade IS NOT NULL AND e.classid IN (SELECT classid FROM classes WHERE (dept_code,course_no) IN (SELECT dept_code, course_no FROM prereq_courses_temp_table));					
+						IF(pre_reqs_enrolled > 0) THEN
+							IF(pre_reqs_enrolled = pre_reqs_exists) THEN
+								IF(courses_enrolled >= 4) THEN
+									error_msg := 'Students cannot be enrolled in more than four classes in the same semester';
+								ELSE
+									IF(courses_enrolled = 3) THEN
+										error_msg := 'You are overloaded';
+										INSERT INTO enrollments VALUES(sid_in, classid_in, null);
+									ELSE
+										INSERT INTO enrollments VALUES(sid_in, classid_in, null);
+									END IF;
+								END IF;
 							ELSE
-								INSERT INTO enrollments VALUES(sid_in, classid_in, null);
-							END IF;
-						END IF;
+								error_msg := 'Prerequisite not satisfied';
+							END IF;	
+						END IF;	
 					ELSE
-						error_msg := 'Prerequisite not satisfied';
-					END IF;	
+						IF(courses_enrolled >= 4) THEN
+								error_msg := 'Students cannot be enrolled in more than four classes in the same semester';
+							ELSE
+								IF(courses_enrolled = 3) THEN
+									error_msg := 'You are overloaded';
+									INSERT INTO enrollments VALUES(sid_in, classid_in, null);
+								ELSE
+									INSERT INTO enrollments VALUES(sid_in, classid_in, null);
+								END IF;
+							END IF;
+					END IF;
 				END IF;
 			END IF;
 		END IF;
 	END IF;
 END;
+-- AND e.lgrade IS NOT NULL
+
+PROCEDURE drop_student_enrollment(sid_in IN students.sid%TYPE, classid_in IN classes.classid%TYPE, error_msg OUT VARCHAR2) IS
+sid_exists NUMBER;
+classid_exists NUMBER;
+enrollment_exists NUMBER;
+prereq_check NUMBER;
+class_strength NUMBER;
+last_class_check NUMBER;
+
+	BEGIN
+		SELECT COUNT(*) INTO sid_exists FROM students s WHERE s.sid = sid_in;
+		SELECT COUNT(*) INTO classid_exists FROM classes cl WHERE cl.classid = classid_in;
+		IF(sid_exists = 0) THEN 
+			error_msg := 'The sid is invalid';
+		ELSE
+			IF(classid_exists = 0) THEN 
+				error_msg := 'classid not found';
+			ELSE
+				SELECT COUNT(*) INTO enrollment_exists FROM enrollments e WHERE e.sid = sid_in AND e.classid = classid_in;
+				IF(enrollment_exists = 0) THEN
+					error_msg := 'The student is not enrolled in the class';
+				ELSE
+					SELECT COUNT(*) INTO prereq_check FROM classes cl, prerequisites p WHERE cl.classid = classid_in AND cl.dept_code = p.pre_dept_code AND cl.course_no = p.pre_course_no AND (p.dept_code, p.course_no) IN
+					(SELECT cl.dept_code, cl.course_no FROM enrollments e, classes cl WHERE e.classid = cl.classid AND e.sid = sid_in);
+					IF(prereq_check > 0) THEN
+						error_msg := 'The drop is not permitted because another class uses it as a prerequisite.';
+					ELSE
+						DELETE FROM enrollments e WHERE e.sid = sid_in AND e.classid = classid_in;
+						SELECT cl.class_size INTO class_strength FROM classes cl WHERE cl.classid = classid_in;
+						SELECT COUNT(*) INTO last_class_check FROM enrollments e WHERE e.sid = sid_in;
+						IF(class_strength = 0) THEN
+							error_msg := 'The class now has no students';
+						ELSE 
+							IF(last_class_check = 0) THEN
+								error_msg := 'This student is enrolled in no class';
+							END IF;
+						END IF;
+					END IF;
+				END IF;	
+			END IF;
+		END IF;
+	END;
+
+PROCEDURE delete_student(sid_in IN students.sid%TYPE, error_msg OUT VARCHAR2) IS
+student_exists NUMBER;
+
+	BEGIN
+		SELECT COUNT(*) INTO student_exists FROM students s WHERE s.sid = sid_in;
+		IF(student_exists = 0) THEN
+			error_msg := 'sid not found';
+		ELSE
+			DELETE FROM students s WHERE s.sid = sid_in;
+			COMMIT; 
+		END IF;
+	END; 
 
 END;
 /
 show error;
+
+

@@ -9,24 +9,26 @@ public class studentRegistrationSystem{
 
 	public static void main(String args[]) throws SQLException{
 
-		// OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
-  		// ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
-  		// Connection conn = ds.getConnection("epalani1", "Hydropump16");
-
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		int option = 0;
-		String userPref = "";
 
 		try{
-			do{
+			Boolean userPref = true;
+			while(userPref){
+			System.out.println();
+			System.out.println("********** Student Registration System **********");
 			System.out.println("Please select an option:\n" +
-							   "1. To view information\n" +
-							   "2. To add a Student to the database\n" +
-							   "3. List the class information for a particular student\n" +
-							   "4. List the pre-requisites for a particular course\n" + 
-							   "5. List the class information\n" +
-							   "6. To enroll student in a class\n" +
-							   "10. View Logs");
+							   "1.  To view information\n" +
+							   "2.  To add a Student to the database\n" +
+							   "3.  List the class information for a particular student\n" +
+							   "4.  List the pre-requisites for a particular course\n" + 
+							   "5.  List the class information\n" +
+							   "6.  To enroll student in a class\n" +
+							   "7.  To drop student from a class\n" +
+							   "8.  To delete a student from the database\n" +
+							   "9.  View Logs\n" +
+							   "10. Exit");
+
 			option = Integer.parseInt(br.readLine());
 			switch(option){
 				case 1:
@@ -71,14 +73,23 @@ public class studentRegistrationSystem{
 					String classId_6 = br.readLine();
 					studentEnrollment(sid_6,classId_6);
 					break;
-				case 10:
+				case 7:
+					dropStudentEnrollment();
+					break;
+				case 8:
+					deleteStudent();
+					break;
+				case 9:
+					System.out.println("Log information:\n");
 					displayLogs();
 					break;
+				case 10:
+					userPref = false;
+					System.out.println("The Application will end. Thank you!");
+					break;
+			}	
 			}
-			System.out.println("Do you wish to continue?\n" +
-							    "Enter [Y/N]");
-			userPref = br.readLine();		
-			}while((userPref.toLowerCase()).equals("y"));
+			
 		}
 		catch(Exception e){
 			System.out.println(e);
@@ -93,7 +104,8 @@ public class studentRegistrationSystem{
 								"b. To view Courses information\n" +
 								"c. To view Pre-requisites information\n" +
 								"d. To view Classes information\n" +
-								"e. To view Enrollments information");
+								"e. To view Enrollments information\n" +
+								"f. To view all tables");
 			try{
 				char dispOption = br.readLine().charAt(0);
 				switch(dispOption){
@@ -117,7 +129,22 @@ public class studentRegistrationSystem{
 					System.out.println("Enrollments Information: \n");
 					displayEnrollmentsTable();
 					break;
-
+				case 'f':
+					System.out.println("Students Information:");
+					displayStudentsTable();
+					System.out.println();
+					System.out.println("Courses Information: \n");
+					displayCoursesTable();
+					System.out.println();
+					System.out.println("Pre-requisites Information: \n");
+					displayPreReqsTable();
+					System.out.println();
+					System.out.println("Classes Information: \n");
+					displayClassesTable();
+					System.out.println();
+					System.out.println("Enrollments Information: \n");
+					displayEnrollmentsTable();
+					break;
 				}
 			}
 			catch(Exception e){
@@ -579,6 +606,100 @@ public class studentRegistrationSystem{
 		        }
 		        else{
 		        	System.out.println("The student " + sidIn + " has been enrolled successfully");
+		        }
+		        
+		        //close the result set, statement, and the connection
+		        cs.close();
+		        conn.close();
+			}
+			catch (SQLException ex) 
+			{ 
+				System.out.println ("\n*** SQLException caught ***\n" + ex.getMessage());
+			}
+   			catch (Exception e) 
+   			{
+   				System.out.println ("\n*** other Exception caught ***\n" + e);
+   			}
+		}
+
+		public static void dropStudentEnrollment(){
+			try{
+				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+				System.out.println("Please enter the student id for the student");
+				String sid = br.readLine();
+				System.out.println("Please enter the class id of the class from which the student needs to be dropped");
+				String classid = br.readLine();
+			
+				OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
+		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
+		        Connection conn = ds.getConnection("epalani1", "Hydropump16");
+
+		        Statement stmt = conn.createStatement();
+
+		        String errorMsg = null;
+
+				String dbcall = "{call student_registration.drop_student_enrollment(?,?,?)}";
+
+		        CallableStatement cs  = conn.prepareCall(dbcall);
+		        cs.setString(1,sid);
+		        cs.setString(2,classid);
+		        cs.registerOutParameter(3,OracleTypes.VARCHAR);
+
+		        cs.execute();
+
+		        errorMsg = cs.getString(3);
+
+		        if(errorMsg != null){
+		        	System.out.println(errorMsg);
+		        }
+		        else{
+		        	System.out.println("The student " + sid + " has been dropped from class " + classid + " successfully");
+		        }
+		        
+		        //close the result set, statement, and the connection
+		        cs.close();
+		        conn.close();
+			}
+			catch (SQLException ex) 
+			{ 
+				System.out.println ("\n*** SQLException caught ***\n" + ex.getMessage());
+			}
+   			catch (Exception e) 
+   			{
+   				System.out.println ("\n*** other Exception caught ***\n" + e);
+   			}
+			
+		}
+
+		public static void deleteStudent(){
+			try{
+				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+				System.out.println("Please enther the sid of the student that needs to be deleted");
+				String sid = br.readLine();
+
+				OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
+		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
+		        Connection conn = ds.getConnection("epalani1", "Hydropump16");
+
+		        Statement stmt = conn.createStatement();
+
+		        String errorMsg = null;
+
+				String dbcall = "{call student_registration.delete_student(?,?)}";
+
+		        CallableStatement cs  = conn.prepareCall(dbcall);
+		        cs.setString(1,sid);
+		        cs.registerOutParameter(2,OracleTypes.VARCHAR);
+
+		        cs.execute();
+
+		        errorMsg = cs.getString(2);
+
+		        if(errorMsg != null){
+		        	System.out.println(errorMsg);
+		        }
+		        else{
+		        	System.out.println("The student " + sid + " has been deleted successfully");
 		        }
 		        
 		        //close the result set, statement, and the connection

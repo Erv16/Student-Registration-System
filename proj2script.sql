@@ -57,18 +57,18 @@ insert into courses values ('CS', 552, 'operating systems');
 insert into courses values ('BIOL', 425, 'molecular biology');
 
 insert into classes values  ('c0001', 'CS', 432, 1, 2019, 'Fall', 35, 34);
-insert into classes values  ('c0002', 'Math', 314, 1, 2019, 'Fall', 25, 24);
+insert into classes values  ('c0002', 'Math', 314, 1, 2019, 'Fall', 25, 25);
 insert into classes values  ('c0003', 'Math', 314, 2, 2019, 'Fall', 25, 22);
-insert into classes values  ('c0004', 'CS', 432, 1, 2018, 'Spring', 30, 30);
+insert into classes values  ('c0004', 'CS', 432, 1, 2018, 'Spring', 30, 27);
 insert into classes values  ('c0005', 'CS', 240, 1, 2018, 'Fall', 40, 39);
-insert into classes values  ('c0006', 'CS', 532, 1, 2018, 'Spring', 29, 25);
-insert into classes values  ('c0007', 'Math', 221, 1, 2019, 'Spring', 30, 30);
+insert into classes values  ('c0006', 'CS', 532, 1, 2018, 'Spring', 29, 3);
+insert into classes values  ('c0007', 'Math', 221, 1, 2019, 'Spring', 30, 25);
 
 insert into enrollments values  ('B001', 'c0001', 'A');
 insert into enrollments values  ('B002', 'c0002', 'B');
 insert into enrollments values  ('B003', 'c0004', 'A');
 insert into enrollments values  ('B004', 'c0004', 'D');
-insert into enrollments values  ('B004', 'c0005', 'B');
+insert into enrollments values  ('B004', 'c0006', 'B');
 insert into enrollments values  ('B005', 'c0006', 'B');
 insert into enrollments values  ('B006', 'c0006', 'A');
 insert into enrollments values  ('B001', 'c0002', 'C');
@@ -78,6 +78,7 @@ insert into enrollments values  ('B001', 'c0003', 'B');
 insert into enrollments values  ('B001', 'c0006', 'B');
 insert into enrollments values  ('B001', 'c0004', 'A');
 insert into enrollments values  ('B001', 'c0005', 'B');
+insert into enrollments values  ('B006', 'c0007', 'A');
 
 insert into prerequisites values ('Math', '314', 'Math', '221');
 insert into prerequisites values ('CS', '240', 'Math', '314');
