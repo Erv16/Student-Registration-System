@@ -5,100 +5,12 @@ import java.io.*;
 import java.awt.*;
 import oracle.jdbc.pool.OracleDataSource;
 
-public class studentRegistrationSystem{
+public class StudentRegistrationSystem{
 
-	public static void main(String args[]) throws SQLException{
+	public static BufferedReader br;
 
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		int option = 0;
-
-		try{
-			Boolean userPref = true;
-			while(userPref){
-			System.out.println();
-			System.out.println("********** Student Registration System **********");
-			System.out.println("Please select an option:\n" +
-							   "1.  To view information\n" +
-							   "2.  To add a Student to the database\n" +
-							   "3.  List the class information for a particular student\n" +
-							   "4.  List the pre-requisites for a particular course\n" + 
-							   "5.  List the class information\n" +
-							   "6.  To enroll student in a class\n" +
-							   "7.  To drop student from a class\n" +
-							   "8.  To delete a student from the database\n" +
-							   "9.  View Logs\n" +
-							   "10. Exit");
-
-			option = Integer.parseInt(br.readLine());
-			switch(option){
-				case 1:
-					displayInformation();
-					break;
-				case 2:
-					System.out.println("Please enter the sid for the Student");
-					String sid_2 = br.readLine();
-					System.out.println("Please enter the student's first name");
-					String firstName = br.readLine();
-					System.out.println("Please enter the student's last name");
-					String lastName = br.readLine();
-					System.out.println("Please enter the current status of the student");
-					String status = br.readLine();
-					System.out.println("Please enter the current gpa of the student");
-					Double gpa = Double.parseDouble(br.readLine());
-					System.out.println("Please enter the email address of the student");
-					String email = br.readLine();
-					addStudent(sid_2, firstName, lastName, status, gpa, email);
-					break;
-				case 3:
-					System.out.println("Please enter the student's id to be searched");
-					String sid_3 = br.readLine();
-					getStudentClassInformation(sid_3);
-					break;
-				case 4:
-					System.out.println("Please enter the Department Code for the course to be searched");
-					String deptCode = br.readLine();
-					System.out.println("Please enter the course number of the course to be searched");
-					int courseNo = Integer.parseInt(br.readLine());
-					getPreRequisiteInformation(deptCode, courseNo);
-					break;
-				case 5:
-					System.out.println("Please enter the class id to be searched");
-					String classId = br.readLine();
-					getClassInformation(classId);
-					break;
-				case 6:
-					System.out.println("Please enter the student's id that has to be enrolled");
-					String sid_6 = br.readLine();
-					System.out.println("Please enter the class id for which the student needs to be enrolled");
-					String classId_6 = br.readLine();
-					studentEnrollment(sid_6,classId_6);
-					break;
-				case 7:
-					dropStudentEnrollment();
-					break;
-				case 8:
-					deleteStudent();
-					break;
-				case 9:
-					System.out.println("Log information:\n");
-					displayLogs();
-					break;
-				case 10:
-					userPref = false;
-					System.out.println("The Application will end. Thank you!");
-					break;
-			}	
-			}
-			
-		}
-		catch(Exception e){
-			System.out.println(e);
-		}
-		
-	}
-
-	public static void displayInformation(){
-			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	public void displayInformation(){
+			//BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			System.out.println("Please select an option:\n" + 
 								"a. To view Students information\n" +
 								"b. To view Courses information\n" +
@@ -153,7 +65,7 @@ public class studentRegistrationSystem{
 			
 		}
 
-		public static void displayStudentsTable(){
+		public void displayStudentsTable(){
 			try{
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
@@ -192,7 +104,7 @@ public class studentRegistrationSystem{
    			}
 		}
 
-		public static void displayCoursesTable(){
+		public void displayCoursesTable(){
 			try{
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
@@ -230,7 +142,7 @@ public class studentRegistrationSystem{
    			}
 		}
 
-		public static void displayPreReqsTable(){
+		public void displayPreReqsTable(){
 			try{
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
@@ -269,7 +181,7 @@ public class studentRegistrationSystem{
    			}
 		}
 
-		public static void displayClassesTable(){
+		public void displayClassesTable(){
 			try{
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
@@ -309,7 +221,7 @@ public class studentRegistrationSystem{
    			}
 		}
 
-		public static void displayEnrollmentsTable(){
+		public void displayEnrollmentsTable(){
 			try{
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
@@ -348,14 +260,29 @@ public class studentRegistrationSystem{
    			}
 		}
 
-		public static void addStudent(String sidIn, String firstNameIn, String lastNameIn, String statusIn, Double gpaIn, String emailIn){
+		public void addStudent(){
 			try{
+				System.out.println("Please enter the sid for the Student");
+				String sidIn = br.readLine();
+				System.out.println("Please enter the student's first name");
+				String firstNameIn = br.readLine();
+				System.out.println("Please enter the student's last name");
+				String lastNameIn = br.readLine();
+				System.out.println("Please enter the current status of the student");
+				String statusIn = br.readLine();
+				System.out.println("Please enter the current gpa of the student");
+				Double gpaIn = Double.parseDouble(br.readLine());
+				System.out.println("Please enter the email address of the student");
+				String emailIn = br.readLine();
+
+				String message = null;
+
 				OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
 			    ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
 			    Connection conn = ds.getConnection("epalani1", "Hydropump16");
 
 			    Statement stmt = conn.createStatement ();
-			    String dbcall = "{ call student_registration.add_student(?,?,?,?,?,?)}";
+			    String dbcall = "{ call student_registration.add_student(?,?,?,?,?,?,?)}";
 		      	CallableStatement cs = conn.prepareCall(dbcall);
 
 			    cs.setString(1, sidIn);
@@ -364,8 +291,13 @@ public class studentRegistrationSystem{
 			    cs.setString(4, statusIn);
 			    cs.setDouble(5, gpaIn);
 			    cs.setString(6, emailIn);
-
+		        cs.registerOutParameter(7, OracleTypes.VARCHAR);
 			    cs.executeUpdate();
+
+			    message = cs.getString(7);
+			    if(message != null){
+			    	System.out.println(message);
+			    }
 
 			    stmt.close();
 			    conn.close();
@@ -381,8 +313,9 @@ public class studentRegistrationSystem{
 			
 		}
 
-		public static void displayLogs(){
+		public void displayLogs(){
 			try{
+				System.out.println("Log information:\n");
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
 		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
@@ -421,8 +354,12 @@ public class studentRegistrationSystem{
    			}
 		}
 
-		public static void getStudentClassInformation(String sidIn){
+		public void getStudentClassInformation(){
 			try{	
+
+				System.out.println("Please enter the student's id to be searched");
+				String sidIn = br.readLine();
+
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
 		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
@@ -473,8 +410,12 @@ public class studentRegistrationSystem{
 
 		}
 
-		public static void getClassInformation(String classIdIn){
+		public void getClassInformation(){
 			try{	
+					
+				System.out.println("Please enter the class id to be searched");
+				String classIdIn = br.readLine();
+				
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
 		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
@@ -523,8 +464,13 @@ public class studentRegistrationSystem{
    			}	
 		}
 
-		public static void getPreRequisiteInformation(String deptCodeIn, int courseNoIn){
+		public void getPreRequisiteInformation(){
 			try{	
+				System.out.println("Please enter the Department Code for the course to be searched");
+				String deptCodeIn = br.readLine();
+				System.out.println("Please enter the course number of the course to be searched");
+				int courseNoIn = Integer.parseInt(br.readLine());
+				
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
 		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
@@ -537,29 +483,21 @@ public class studentRegistrationSystem{
 		        CallableStatement cs1 = conn.prepareCall("TRUNCATE TABLE prereq_courses_temp_table");
 		        cs1.execute();
 
-		        String dbcall = "{call student_registration.process_prerequisites(?,?,?,?)}";
+		        String dbcall = "{call student_registration.get_prerequisites(?,?,?)}";
 		        
 		        CallableStatement cs2  = conn.prepareCall(dbcall);
 		        cs2.setString(1,deptCodeIn);
 		        cs2.setInt(2,courseNoIn);
-		        cs2.registerOutParameter(3,OracleTypes.VARCHAR);
-		        cs2.registerOutParameter(4,OracleTypes.CURSOR);
+		        cs2.registerOutParameter(3,OracleTypes.CURSOR);
 
 		        cs2.execute();
 
-		        errorMsg = cs2.getString(3);
-
-		        if(errorMsg != null){
-		        	System.out.println(errorMsg);
+		        System.out.println("Prerequisite Courses\n");
+		        ResultSet rs = (ResultSet)cs2.getObject(3);
+		        while (rs.next()) {
+			        System.out.println(rs.getString(1));
 		        }
-		        else{
-		        	ResultSet rs = (ResultSet)cs2.getObject(4);
-		        	while (rs.next()) {
-			            System.out.println(rs.getString(1)
-			            );
-		        	}
-		        	rs.close();
-		        }
+		        rs.close();
 		        
 		        //close the result set, statement, and the connection
 		        cs1.close();
@@ -576,8 +514,14 @@ public class studentRegistrationSystem{
    			}	
 		}
 
-		public static void studentEnrollment(String sidIn, String classIdIn){
+		public void studentEnrollment(){
 			try{
+
+				System.out.println("Please enter the student's id that has to be enrolled");
+				String sidIn = br.readLine();
+				System.out.println("Please enter the class id for which the student needs to be enrolled");
+				String classIdIn = br.readLine();
+
 				//Connection to Oracle server
 		        OracleDataSource ds = new oracle.jdbc.pool.OracleDataSource();
 		        ds.setURL("jdbc:oracle:thin:@castor.cc.binghamton.edu:1521:ACAD111");
@@ -585,7 +529,7 @@ public class studentRegistrationSystem{
 
 		        Statement stmt = conn.createStatement();
 
-		        String errorMsg = null;
+		        String message = null;
 
 		        CallableStatement cs1 = conn.prepareCall("TRUNCATE TABLE prereq_courses_temp_table");
 		        cs1.execute();
@@ -599,13 +543,10 @@ public class studentRegistrationSystem{
 
 		        cs.execute();
 
-		        errorMsg = cs.getString(3);
+		        message = cs.getString(3);
 
-		        if(errorMsg != null){
-		        	System.out.println(errorMsg);
-		        }
-		        else{
-		        	System.out.println("The student " + sidIn + " has been enrolled successfully");
+		        if(message != null){
+		        	System.out.println(message);
 		        }
 		        
 		        //close the result set, statement, and the connection
@@ -622,9 +563,9 @@ public class studentRegistrationSystem{
    			}
 		}
 
-		public static void dropStudentEnrollment(){
+		public void dropStudentEnrollment(){
 			try{
-				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+				//BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 				System.out.println("Please enter the student id for the student");
 				String sid = br.readLine();
 				System.out.println("Please enter the class id of the class from which the student needs to be dropped");
@@ -636,7 +577,7 @@ public class studentRegistrationSystem{
 
 		        Statement stmt = conn.createStatement();
 
-		        String errorMsg = null;
+		        String message = null;
 
 				String dbcall = "{call student_registration.drop_student_enrollment(?,?,?)}";
 
@@ -647,13 +588,10 @@ public class studentRegistrationSystem{
 
 		        cs.execute();
 
-		        errorMsg = cs.getString(3);
+		        message = cs.getString(3);
 
-		        if(errorMsg != null){
-		        	System.out.println(errorMsg);
-		        }
-		        else{
-		        	System.out.println("The student " + sid + " has been dropped from class " + classid + " successfully");
+		        if(message != null){
+		        	System.out.println(message);
 		        }
 		        
 		        //close the result set, statement, and the connection
@@ -671,9 +609,9 @@ public class studentRegistrationSystem{
 			
 		}
 
-		public static void deleteStudent(){
+		public void deleteStudent(){
 			try{
-				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+				//BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 				System.out.println("Please enther the sid of the student that needs to be deleted");
 				String sid = br.readLine();
 
@@ -683,7 +621,7 @@ public class studentRegistrationSystem{
 
 		        Statement stmt = conn.createStatement();
 
-		        String errorMsg = null;
+		        String message = null;
 
 				String dbcall = "{call student_registration.delete_student(?,?)}";
 
@@ -693,13 +631,10 @@ public class studentRegistrationSystem{
 
 		        cs.execute();
 
-		        errorMsg = cs.getString(2);
+		        message = cs.getString(2);
 
-		        if(errorMsg != null){
-		        	System.out.println(errorMsg);
-		        }
-		        else{
-		        	System.out.println("The student " + sid + " has been deleted successfully");
+		        if(message != null){
+		        	System.out.println(message);
 		        }
 		        
 		        //close the result set, statement, and the connection
@@ -714,5 +649,71 @@ public class studentRegistrationSystem{
    			{
    				System.out.println ("\n*** other Exception caught ***\n" + e);
    			}
+	}
+
+	public static void main(String args[]) throws SQLException{
+
+		br = new BufferedReader(new InputStreamReader(System.in));
+		int option = 0;
+		StudentRegistrationSystem srs = new StudentRegistrationSystem();
+
+	try{
+		Boolean userPref = true;
+		while(userPref){
+			System.out.println();
+			System.out.println("********** Student Registration System **********");
+			System.out.println("Please select an option:\n" +
+							   "1.  To view information\n" +
+							   "2.  To add a Student to the database\n" +
+							   "3.  List the class information for a particular student\n" +
+							   "4.  List the pre-requisites for a particular course\n" + 
+							   "5.  List the class information\n" +
+							   "6.  To enroll student in a class\n" +
+							   "7.  To drop student from a class\n" +
+							   "8.  To delete a student from the database\n" +
+							   "9.  View Logs\n" +
+							   "10. Exit");
+
+			option = Integer.parseInt(br.readLine());
+			switch(option){
+				case 1:
+					srs.displayInformation();
+					break;
+				case 2:
+					srs.addStudent();
+					break;
+				case 3:
+					srs.getStudentClassInformation();
+					break;
+				case 4:
+					srs.getPreRequisiteInformation();
+					break;
+				case 5:
+					srs.getClassInformation();
+					break;
+				case 6:
+					srs.studentEnrollment();
+					break;
+				case 7:
+					srs.dropStudentEnrollment();
+					break;
+				case 8:
+					srs.deleteStudent();
+					break;
+				case 9:
+					srs.displayLogs();
+					break;
+				case 10:
+					userPref = false;
+					System.out.println("Application terminating...\nThank you!");
+					break;
+			}	
 		}
+			
+	}
+	catch(Exception e){
+			System.out.println(e);
+	}
+		
+	}
 }

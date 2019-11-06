@@ -77,7 +77,7 @@ insert into enrollments values  ('B007', 'c0007', 'A');
 insert into enrollments values  ('B001', 'c0003', 'B');
 insert into enrollments values  ('B001', 'c0006', 'B');
 insert into enrollments values  ('B001', 'c0004', 'A');
-insert into enrollments values  ('B001', 'c0005', 'B');
+-- insert into enrollments values  ('B001', 'c0005', 'B');
 insert into enrollments values  ('B006', 'c0007', 'A');
 
 insert into prerequisites values ('Math', '314', 'Math', '221');
